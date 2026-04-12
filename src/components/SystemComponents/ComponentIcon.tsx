@@ -153,6 +153,77 @@ export default function ComponentIcon({ type, size = 24, color = '#00f5ff' }: Pr
         </svg>
       );
 
+    case 'dns':
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5" />
+          <text x="12" y="13" textAnchor="middle" fill={color} fontSize="7" fontWeight="bold" fontFamily="monospace" dominantBaseline="middle">
+            DNS
+          </text>
+          <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="0.5" opacity="0.3" strokeDasharray="3 2">
+            <animate attributeName="stroke-dashoffset" values="0;20" dur="3s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+      );
+
+    case 'firewall':
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7L12 2z" stroke={color} strokeWidth="1.5" />
+          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7L12 2z" fill={color} opacity="0.08" />
+          <line x1="8" y1="10" x2="16" y2="10" stroke={color} strokeWidth="1" opacity="0.5" />
+          <line x1="8" y1="13" x2="16" y2="13" stroke={color} strokeWidth="1" opacity="0.5" />
+          <circle cx="12" cy="16" r="1" fill={color}>
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+      );
+
+    case 'search-engine':
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="10" cy="10" r="6" stroke={color} strokeWidth="1.5" />
+          <line x1="14.5" y1="14.5" x2="20" y2="20" stroke={color} strokeWidth="2" strokeLinecap="round" />
+          <circle cx="10" cy="10" r="3" stroke={color} strokeWidth="0.5" opacity="0.3" />
+          <circle cx="10" cy="10" r="1" fill={color} opacity="0.4">
+            <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+      );
+
+    case 'notification':
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M12 3c-3.5 0-6 2.5-6 6v4l-2 2v1h16v-1l-2-2v-4c0-3.5-2.5-6-6-6z" stroke={color} strokeWidth="1.5" />
+          <path d="M10 19h4c0 1.1-.9 2-2 2s-2-.9-2-2z" stroke={color} strokeWidth="1.5" />
+          <circle cx="18" cy="5" r="3" fill={color} opacity="0.6">
+            <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+      );
+
+    case 'scheduler':
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5" />
+          <line x1="12" y1="6" x2="12" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="12" y1="12" x2="16" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="12" cy="12" r="1.5" fill={color} opacity="0.5" />
+          {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map(deg => (
+            <line
+              key={deg}
+              x1={12 + 7.5 * Math.cos((deg * Math.PI) / 180)}
+              y1={12 + 7.5 * Math.sin((deg * Math.PI) / 180)}
+              x2={12 + 8.5 * Math.cos((deg * Math.PI) / 180)}
+              y2={12 + 8.5 * Math.sin((deg * Math.PI) / 180)}
+              stroke={color}
+              strokeWidth="0.8"
+              opacity="0.4"
+            />
+          ))}
+        </svg>
+      );
+
     default:
       return (
         <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>

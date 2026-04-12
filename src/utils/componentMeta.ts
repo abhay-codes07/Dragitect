@@ -71,6 +71,41 @@ export const COMPONENT_META: ComponentMeta[] = [
     color: '#34d399',
     glowColor: 'rgba(52, 211, 153, 0.5)',
   },
+  {
+    type: 'dns',
+    label: 'DNS',
+    description: 'Domain Name System for resolving domain names to IP addresses',
+    color: '#06b6d4',
+    glowColor: 'rgba(6, 182, 212, 0.5)',
+  },
+  {
+    type: 'firewall',
+    label: 'Firewall / WAF',
+    description: 'Network security that monitors and filters incoming/outgoing traffic',
+    color: '#ef4444',
+    glowColor: 'rgba(239, 68, 68, 0.5)',
+  },
+  {
+    type: 'search-engine',
+    label: 'Search Engine',
+    description: 'Full-text search and analytics engine (Elasticsearch, Solr)',
+    color: '#f59e0b',
+    glowColor: 'rgba(245, 158, 11, 0.5)',
+  },
+  {
+    type: 'notification',
+    label: 'Notification',
+    description: 'Push notification service for emails, SMS, and mobile alerts',
+    color: '#ec4899',
+    glowColor: 'rgba(236, 72, 153, 0.5)',
+  },
+  {
+    type: 'scheduler',
+    label: 'Task Scheduler',
+    description: 'Cron jobs and scheduled task execution (Airflow, Celery Beat)',
+    color: '#14b8a6',
+    glowColor: 'rgba(20, 184, 166, 0.5)',
+  },
 ];
 
 export function getComponentMeta(type: string): ComponentMeta {

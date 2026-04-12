@@ -1,11 +1,29 @@
 import { motion } from 'framer-motion';
+import type { UserProgress } from '../../types';
+import { getXPForNextLevel } from '../../utils/challenges';
 
 interface Props {
   nodeCount: number;
   connectionCount: number;
+  progress: UserProgress;
+  onOpenProfile: () => void;
+  onOpenQuests: () => void;
 }
 
-export default function TopBar({ nodeCount, connectionCount }: Props) {
+const RANK_COLORS: Record<string, string> = {
+  Genin: '#3b82f6',
+  Chunin: '#00ff88',
+  Jonin: '#ffd700',
+  Anbu: '#ff00e5',
+  Kage: '#ff6b00',
+  Hokage: '#ff3366',
+};
+
+export default function TopBar({ nodeCount, connectionCount, progress, onOpenProfile, onOpenQuests }: Props) {
+  const xpInfo = getXPForNextLevel(progress.xp);
+  const xpPercent = Math.min(100, (xpInfo.current / xpInfo.needed) * 100);
+  const rankColor = RANK_COLORS[progress.rank] || '#ffd700';
+
   return (
     <motion.header
       initial={{ y: -60, opacity: 0 }}
@@ -87,39 +105,80 @@ export default function TopBar({ nodeCount, connectionCount }: Props) {
       }}>
         <StatusItem label="NODES" value={nodeCount} color="#00f5ff" />
         <StatusItem label="LINKS" value={connectionCount} color="#ff00e5" />
-        <StatusItem label="PHASE" value="1/5" color="#ffd700" />
+        <StatusItem label="XP" value={progress.xp} color="#ffd700" />
       </div>
 
-      {/* Right side actions */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-      }}>
-        <motion.div
-          animate={{
-            boxShadow: [
-              '0 0 5px rgba(0,255,136,0.3)',
-              '0 0 15px rgba(0,255,136,0.5)',
-              '0 0 5px rgba(0,255,136,0.3)',
-            ],
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
+      {/* Right side - Quests + Level badge */}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <motion.button
+          whileHover={{ scale: 1.05, boxShadow: '0 0 24px rgba(255, 215, 0, 0.5)' }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onOpenQuests}
           style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: '#00ff88',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '5px 14px',
+            borderRadius: 20,
+            background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.18), rgba(255, 107, 0, 0.18))',
+            border: '1px solid rgba(255, 215, 0, 0.4)',
+            cursor: 'pointer',
+            fontFamily: "'Orbitron', sans-serif",
+            fontSize: 10,
+            fontWeight: 700,
+            color: '#ffd700',
+            letterSpacing: '0.18em',
+            boxShadow: '0 0 12px rgba(255, 215, 0, 0.2)',
           }}
-        />
+        >
+          <motion.span
+            animate={{ rotate: [0, 15, -15, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+            style={{ fontSize: 14 }}
+          >
+            🦊
+          </motion.span>
+          QUESTS
+        </motion.button>
+
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onOpenProfile}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          cursor: 'pointer',
+          padding: '4px 12px',
+          borderRadius: 20,
+          background: `${rankColor}10`,
+          border: `1px solid ${rankColor}25`,
+        }}
+      >
+        {/* XP mini bar */}
+        <div style={{ width: 40, height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{ width: `${xpPercent}%`, height: '100%', background: rankColor, borderRadius: 2 }} />
+        </div>
         <span style={{
-          fontFamily: "'Exo 2', sans-serif",
+          fontFamily: "'Orbitron', sans-serif",
           fontSize: 10,
-          color: '#00ff88',
+          fontWeight: 700,
+          color: rankColor,
           letterSpacing: '0.1em',
         }}>
-          ONLINE
+          Lv.{progress.level}
         </span>
+        <span style={{
+          fontFamily: "'Exo 2', sans-serif",
+          fontSize: 9,
+          fontWeight: 600,
+          color: rankColor,
+          opacity: 0.7,
+        }}>
+          {progress.rank}
+        </span>
+      </motion.div>
       </div>
     </motion.header>
   );

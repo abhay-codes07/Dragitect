@@ -8,6 +8,7 @@ interface Props {
   node: CanvasNode;
   isSelected: boolean;
   isConnecting: boolean;
+  isSimHighlight?: boolean;
   onSelect: (id: string) => void;
   onDrag: (id: string, x: number, y: number) => void;
   onConnectionStart: (id: string) => void;
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export default function CanvasNodeComponent({
-  node, isSelected, isConnecting,
+  node, isSelected, isConnecting, isSimHighlight,
   onSelect, onDrag, onConnectionStart, onConnectionEnd, onDelete, onLabelChange,
 }: Props) {
   const meta = getComponentMeta(node.type);
@@ -88,6 +89,28 @@ export default function CanvasNodeComponent({
         userSelect: 'none',
       }}
     >
+      {/* Simulation highlight ring */}
+      {isSimHighlight && !isSelected && (
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: -8,
+            borderRadius: 16,
+            border: '2px solid #ff6b00',
+            boxShadow: '0 0 30px rgba(255, 107, 0, 0.5)',
+          }}
+          animate={{
+            boxShadow: [
+              '0 0 15px rgba(255, 107, 0, 0.3)',
+              '0 0 40px rgba(255, 107, 0, 0.6)',
+              '0 0 15px rgba(255, 107, 0, 0.3)',
+            ],
+            scale: [1, 1.05, 1],
+          }}
+          transition={{ duration: 0.8, repeat: Infinity }}
+        />
+      )}
+
       {/* Selection ring */}
       {isSelected && (
         <motion.div

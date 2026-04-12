@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { COMPONENT_META } from '../../utils/componentMeta';
 import type { ComponentType } from '../../types';
@@ -8,6 +9,16 @@ interface Props {
 }
 
 export default function Sidebar({ onDragStart }: Props) {
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return COMPONENT_META;
+    const q = search.toLowerCase();
+    return COMPONENT_META.filter(m =>
+      m.label.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
+    );
+  }, [search]);
+
   return (
     <motion.aside
       initial={{ x: -300, opacity: 0 }}
@@ -64,9 +75,28 @@ export default function Sidebar({ onDragStart }: Props) {
           fontSize: 11,
           color: '#555577',
           letterSpacing: '0.1em',
+          marginBottom: 8,
         }}>
           Drag to canvas to place
         </p>
+
+        {/* Search box */}
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search components..."
+          style={{
+            width: '100%',
+            padding: '6px 10px',
+            background: 'rgba(0,0,0,0.3)',
+            border: '1px solid rgba(0, 245, 255, 0.12)',
+            borderRadius: 6,
+            color: '#c0c0e0',
+            fontFamily: "'Exo 2', sans-serif",
+            fontSize: 11,
+            outline: 'none',
+          }}
+        />
       </div>
 
       {/* Component list */}
@@ -78,12 +108,12 @@ export default function Sidebar({ onDragStart }: Props) {
         flexDirection: 'column',
         gap: 6,
       }}>
-        {COMPONENT_META.map((meta, i) => (
+        {filtered.map((meta, i) => (
           <motion.div
             key={meta.type}
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 + i * 0.06, type: 'spring', stiffness: 200 }}
+            transition={{ delay: 0.1 + i * 0.04, type: 'spring', stiffness: 200 }}
             draggable
             onDragStart={(e) => {
               const event = e as unknown as React.DragEvent;
@@ -145,9 +175,20 @@ export default function Sidebar({ onDragStart }: Props) {
             </div>
           </motion.div>
         ))}
+        {filtered.length === 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: 20,
+            fontFamily: "'Rajdhani', sans-serif",
+            fontSize: 13,
+            color: '#444466',
+          }}>
+            No components match "{search}"
+          </div>
+        )}
       </div>
 
-      {/* Footer with scan effect */}
+      {/* Footer */}
       <div style={{
         padding: '12px 16px',
         borderTop: '1px solid rgba(0, 245, 255, 0.08)',
@@ -163,7 +204,7 @@ export default function Sidebar({ onDragStart }: Props) {
           animate={{ opacity: [0.4, 0.8, 0.4] }}
           transition={{ duration: 3, repeat: Infinity }}
         >
-          PHASE 1 / 5 LOADED
+          {COMPONENT_META.length} COMPONENTS LOADED
         </motion.div>
       </div>
     </motion.aside>

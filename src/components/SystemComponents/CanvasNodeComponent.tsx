@@ -1,5 +1,5 @@
-import { useRef, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useRef, useState, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { CanvasNode } from '../../types';
 import { getComponentMeta } from '../../utils/componentMeta';
 import ComponentIcon from './ComponentIcon';
@@ -27,17 +27,33 @@ export default function CanvasNodeComponent({
   const [isEditing, setIsEditing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Deterministic offsets so each node floats at its own phase
+  const seed = useMemo(() => {
+    let h = 0;
+    for (let i = 0; i < node.id.length; i++) h = (h * 31 + node.id.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }, [node.id]);
+  const floatDelay = (seed % 100) / 100;
+  const floatDuration = 3 + ((seed >> 4) % 5) * 0.3;
+  const rgb = hexToRgb(meta.color);
+
+  // Orbiting chakra sparks around the node
+  const sparks = useMemo(() =>
+    Array.from({ length: 3 }, (_, i) => ({
+      id: i,
+      orbit: 60 + (i * 10),
+      duration: 4 + i * 0.6,
+      phase: (seed >> (i * 3)) % 360,
+    })), [seed]);
+
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (isEditing) return;
     e.stopPropagation();
     e.preventDefault();
     onSelect(node.id);
-
     dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      nodeX: node.position.x,
-      nodeY: node.position.y,
+      startX: e.clientX, startY: e.clientY,
+      nodeX: node.position.x, nodeY: node.position.y,
     };
     setIsDragging(true);
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -70,8 +86,16 @@ export default function CanvasNodeComponent({
         scale: 1,
         opacity: 1,
         rotate: 0,
+        y: isDragging ? 0 : [0, -3, 0],
       }}
-      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+      transition={{
+        scale: { type: 'spring', stiffness: 260, damping: 20 },
+        opacity: { duration: 0.35 },
+        rotate: { type: 'spring', stiffness: 260, damping: 20 },
+        y: isDragging
+          ? { duration: 0 }
+          : { duration: floatDuration, delay: floatDelay, repeat: Infinity, ease: 'easeInOut' },
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -89,6 +113,83 @@ export default function CanvasNodeComponent({
         userSelect: 'none',
       }}
     >
+      {/* Placement shockwave — fires once on spawn */}
+      <motion.div
+        initial={{ scale: 0, opacity: 0.8 }}
+        animate={{ scale: 3, opacity: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '50%',
+          border: `2px solid ${meta.color}`,
+          boxShadow: `0 0 40px ${meta.glowColor}`,
+          pointerEvents: 'none',
+        }}
+      />
+      <motion.div
+        initial={{ scale: 0, opacity: 0.5 }}
+        animate={{ scale: 4.5, opacity: 0 }}
+        transition={{ duration: 1.2, ease: 'easeOut', delay: 0.1 }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '50%',
+          border: `1px solid rgba(${rgb}, 0.6)`,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Permanent soft aura */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          inset: -24,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, rgba(${rgb}, 0.18), transparent 70%)`,
+          pointerEvents: 'none',
+        }}
+        animate={{ opacity: [0.4, 0.8, 0.4], scale: [0.95, 1.05, 0.95] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: floatDelay }}
+      />
+
+      {/* Orbiting chakra sparks */}
+      {!isDragging && sparks.map(sp => (
+        <motion.div
+          key={`spark-${sp.id}`}
+          style={{
+            position: 'absolute',
+            top: 30, left: 60,
+            width: 4, height: 4,
+            marginLeft: -2, marginTop: -2,
+            borderRadius: '50%',
+            background: meta.color,
+            boxShadow: `0 0 8px ${meta.color}, 0 0 16px ${meta.color}`,
+            pointerEvents: 'none',
+          }}
+          animate={{
+            x: [
+              Math.cos((sp.phase) * Math.PI / 180) * sp.orbit,
+              Math.cos((sp.phase + 120) * Math.PI / 180) * sp.orbit,
+              Math.cos((sp.phase + 240) * Math.PI / 180) * sp.orbit,
+              Math.cos((sp.phase + 360) * Math.PI / 180) * sp.orbit,
+            ],
+            y: [
+              Math.sin((sp.phase) * Math.PI / 180) * sp.orbit * 0.55,
+              Math.sin((sp.phase + 120) * Math.PI / 180) * sp.orbit * 0.55,
+              Math.sin((sp.phase + 240) * Math.PI / 180) * sp.orbit * 0.55,
+              Math.sin((sp.phase + 360) * Math.PI / 180) * sp.orbit * 0.55,
+            ],
+            opacity: [0.3, 1, 0.3],
+          }}
+          transition={{
+            x: { duration: sp.duration, repeat: Infinity, ease: 'linear' },
+            y: { duration: sp.duration, repeat: Infinity, ease: 'linear' },
+            opacity: { duration: sp.duration, repeat: Infinity, ease: 'easeInOut' },
+          }}
+        />
+      ))}
+
       {/* Simulation highlight ring */}
       {isSimHighlight && !isSelected && (
         <motion.div
@@ -102,7 +203,7 @@ export default function CanvasNodeComponent({
           animate={{
             boxShadow: [
               '0 0 15px rgba(255, 107, 0, 0.3)',
-              '0 0 40px rgba(255, 107, 0, 0.6)',
+              '0 0 50px rgba(255, 107, 0, 0.8)',
               '0 0 15px rgba(255, 107, 0, 0.3)',
             ],
             scale: [1, 1.05, 1],
@@ -125,7 +226,7 @@ export default function CanvasNodeComponent({
           animate={{
             boxShadow: [
               `0 0 10px ${meta.glowColor}`,
-              `0 0 30px ${meta.glowColor}`,
+              `0 0 40px ${meta.glowColor}`,
               `0 0 10px ${meta.glowColor}`,
             ],
           }}
@@ -133,12 +234,55 @@ export default function CanvasNodeComponent({
         />
       )}
 
+      {/* Hover spark burst */}
+      <AnimatePresence>
+        {isHovered && !isDragging && (
+          <>
+            {[0, 60, 120, 180, 240, 300].map(deg => (
+              <motion.div
+                key={`burst-${deg}`}
+                initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+                animate={{
+                  scale: [0, 1, 0],
+                  x: Math.cos((deg * Math.PI) / 180) * 48,
+                  y: Math.sin((deg * Math.PI) / 180) * 48,
+                  opacity: [1, 1, 0],
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.9, ease: 'easeOut' }}
+                style={{
+                  position: 'absolute',
+                  top: '50%', left: '50%',
+                  width: 5, height: 5,
+                  marginLeft: -2.5, marginTop: -2.5,
+                  borderRadius: '50%',
+                  background: meta.color,
+                  boxShadow: `0 0 10px ${meta.color}`,
+                  pointerEvents: 'none',
+                }}
+              />
+            ))}
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Main card */}
       <motion.div
-        animate={isDragging ? { scale: 1.08, y: -4 } : { scale: 1, y: 0 }}
+        animate={
+          isDragging
+            ? { scale: 1.1, y: -4, rotate: [0, -2, 2, 0] }
+            : isHovered
+              ? { scale: 1.05, y: -2 }
+              : { scale: 1, y: 0, rotate: 0 }
+        }
+        transition={
+          isDragging
+            ? { rotate: { duration: 0.4, repeat: Infinity } }
+            : { type: 'spring', stiffness: 260, damping: 20 }
+        }
         style={{
-          background: `linear-gradient(135deg, rgba(${hexToRgb(meta.color)}, 0.12), rgba(${hexToRgb(meta.color)}, 0.04))`,
-          border: `1px solid rgba(${hexToRgb(meta.color)}, ${isSelected ? 0.6 : 0.25})`,
+          background: `linear-gradient(135deg, rgba(${rgb}, 0.18), rgba(${rgb}, 0.04))`,
+          border: `1px solid rgba(${rgb}, ${isSelected ? 0.7 : 0.3})`,
           borderRadius: 10,
           padding: '12px 10px 10px',
           display: 'flex',
@@ -147,12 +291,28 @@ export default function CanvasNodeComponent({
           gap: 6,
           backdropFilter: 'blur(8px)',
           boxShadow: isDragging
-            ? `0 10px 40px rgba(0,0,0,0.5), 0 0 20px ${meta.glowColor}`
-            : `0 2px 10px rgba(0,0,0,0.3)`,
+            ? `0 10px 40px rgba(0,0,0,0.5), 0 0 40px ${meta.glowColor}`
+            : isHovered
+              ? `0 6px 22px rgba(0,0,0,0.4), 0 0 24px ${meta.glowColor}`
+              : `0 2px 12px rgba(0,0,0,0.3), 0 0 12px rgba(${rgb}, 0.15)`,
           transition: 'box-shadow 0.3s, border-color 0.3s',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {/* Icon with pulse */}
+        {/* Moving shimmer */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: `linear-gradient(120deg, transparent 30%, rgba(${rgb}, 0.15) 50%, transparent 70%)`,
+            pointerEvents: 'none',
+          }}
+          animate={{ x: ['-150%', '150%'] }}
+          transition={{ duration: 4 + (seed % 3), repeat: Infinity, ease: 'linear', delay: floatDelay * 2 }}
+        />
+
+        {/* Icon with pulse + rotation */}
         <motion.div
           style={{
             width: 40,
@@ -161,14 +321,15 @@ export default function CanvasNodeComponent({
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 8,
-            background: `rgba(${hexToRgb(meta.color)}, 0.1)`,
-            border: `1px solid rgba(${hexToRgb(meta.color)}, 0.2)`,
+            background: `rgba(${rgb}, 0.15)`,
+            border: `1px solid rgba(${rgb}, 0.3)`,
+            position: 'relative',
           }}
           animate={{
             boxShadow: [
-              `0 0 5px rgba(${hexToRgb(meta.color)}, 0.2)`,
-              `0 0 15px rgba(${hexToRgb(meta.color)}, 0.4)`,
-              `0 0 5px rgba(${hexToRgb(meta.color)}, 0.2)`,
+              `0 0 5px rgba(${rgb}, 0.3)`,
+              `0 0 20px rgba(${rgb}, 0.7)`,
+              `0 0 5px rgba(${rgb}, 0.3)`,
             ],
           }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -218,13 +379,14 @@ export default function CanvasNodeComponent({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            textShadow: `0 0 8px ${meta.glowColor}`,
           }}>
             {node.label}
           </div>
         )}
       </motion.div>
 
-      {/* Connection handle */}
+      {/* Connection handle bottom */}
       {(isHovered || isSelected || isConnecting) && (
         <motion.div
           initial={{ scale: 0 }}
@@ -238,19 +400,16 @@ export default function CanvasNodeComponent({
             height: 16,
             borderRadius: '50%',
             background: isConnecting ? '#ff00e5' : meta.color,
-            border: '2px solid rgba(255,255,255,0.3)',
+            border: '2px solid rgba(255,255,255,0.4)',
             cursor: 'crosshair',
-            boxShadow: `0 0 10px ${isConnecting ? 'rgba(255,0,229,0.6)' : meta.glowColor}`,
+            boxShadow: `0 0 14px ${isConnecting ? 'rgba(255,0,229,0.8)' : meta.glowColor}`,
             zIndex: 20,
           }}
-          whileHover={{ scale: 1.3 }}
+          whileHover={{ scale: 1.4 }}
           onPointerDown={(e) => {
             e.stopPropagation();
-            if (isConnecting) {
-              onConnectionEnd(node.id);
-            } else {
-              onConnectionStart(node.id);
-            }
+            if (isConnecting) onConnectionEnd(node.id);
+            else onConnectionStart(node.id);
           }}
         />
       )}
@@ -289,7 +448,7 @@ export default function CanvasNodeComponent({
         </motion.button>
       )}
 
-      {/* Connection point indicator at top */}
+      {/* Connection handle top */}
       {(isHovered || isConnecting) && (
         <motion.div
           initial={{ scale: 0 }}
@@ -303,19 +462,16 @@ export default function CanvasNodeComponent({
             height: 16,
             borderRadius: '50%',
             background: isConnecting ? '#00ff88' : meta.color,
-            border: '2px solid rgba(255,255,255,0.3)',
+            border: '2px solid rgba(255,255,255,0.4)',
             cursor: 'crosshair',
-            boxShadow: `0 0 10px ${isConnecting ? 'rgba(0,255,136,0.6)' : meta.glowColor}`,
+            boxShadow: `0 0 14px ${isConnecting ? 'rgba(0,255,136,0.8)' : meta.glowColor}`,
             zIndex: 20,
           }}
-          whileHover={{ scale: 1.3 }}
+          whileHover={{ scale: 1.4 }}
           onPointerDown={(e) => {
             e.stopPropagation();
-            if (isConnecting) {
-              onConnectionEnd(node.id);
-            } else {
-              onConnectionStart(node.id);
-            }
+            if (isConnecting) onConnectionEnd(node.id);
+            else onConnectionStart(node.id);
           }}
         />
       )}

@@ -37,7 +37,27 @@ export type ComponentType =
   | 'firewall'
   | 'search-engine'
   | 'notification'
-  | 'scheduler';
+  | 'scheduler'
+  | 'auth-service'
+  | 'payment-gateway'
+  | 'ml-service'
+  | 'websocket'
+  | 'rate-limiter'
+  | 'kubernetes'
+  | 'monitoring'
+  | 'log-aggregator'
+  | 'data-warehouse'
+  | 'event-bus'
+  | 'graphql'
+  | 'session-store'
+  | 'vector-db'
+  | 'stream-processor'
+  | 'edge-worker'
+  | 'analytics'
+  | 'service-mesh'
+  | 'blob-cdn'
+  | 'reverse-proxy'
+  | 'secret-vault';
 
 export interface ComponentMeta {
   type: ComponentType;

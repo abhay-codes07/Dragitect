@@ -44,8 +44,15 @@ export default function ConnectionLayer({
       }}
     >
       <defs>
-        <filter id="conn-glow">
+        <filter id="conn-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="conn-bloom" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="6" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -53,26 +60,25 @@ export default function ConnectionLayer({
         </filter>
         <marker
           id="arrowhead"
-          markerWidth="10"
-          markerHeight="7"
-          refX="9"
-          refY="3.5"
+          markerWidth="12"
+          markerHeight="8"
+          refX="10"
+          refY="4"
           orient="auto"
         >
-          <polygon points="0 0, 10 3.5, 0 7" fill="#00f5ff" opacity="0.7" />
+          <polygon points="0 0, 12 4, 0 8" fill="#00f5ff" opacity="0.9" />
         </marker>
-        {/* Colored arrowheads for protocols */}
         {Object.entries(PROTOCOL_COLORS).map(([key, color]) => (
           <marker
             key={key}
             id={`arrow-${key}`}
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
+            markerWidth="12"
+            markerHeight="8"
+            refX="10"
+            refY="4"
             orient="auto"
           >
-            <polygon points="0 0, 10 3.5, 0 7" fill={color} opacity="0.7" />
+            <polygon points="0 0, 12 4, 0 8" fill={color} opacity="0.9" />
           </marker>
         ))}
       </defs>
@@ -143,13 +149,32 @@ export default function ConnectionLayer({
               />
             )}
 
-            {/* Glow line */}
+            {/* Outer bloom */}
             <motion.path
               d={path}
               stroke={lineColor}
-              strokeWidth="4"
+              strokeWidth="10"
               fill="none"
-              opacity={isSelected ? 0.3 : 0.15}
+              opacity={isSelected ? 0.25 : 0.1}
+              filter="url(#conn-bloom)"
+              initial={{ pathLength: 0 }}
+              animate={{
+                pathLength: 1,
+                opacity: isSelected ? [0.2, 0.4, 0.2] : [0.08, 0.18, 0.08],
+              }}
+              transition={{
+                pathLength: { duration: 0.6 },
+                opacity: { duration: 2.5, repeat: Infinity, ease: 'easeInOut' },
+              }}
+            />
+
+            {/* Inner glow line */}
+            <motion.path
+              d={path}
+              stroke={lineColor}
+              strokeWidth="5"
+              fill="none"
+              opacity={isSelected ? 0.4 : 0.22}
               filter="url(#conn-glow)"
               initial={{ pathLength: 0 }}
               animate={{ pathLength: 1 }}
@@ -160,10 +185,10 @@ export default function ConnectionLayer({
             <motion.path
               d={path}
               stroke={lineColor}
-              strokeWidth={isSelected ? 2.5 : 2}
+              strokeWidth={isSelected ? 2.8 : 2.2}
               fill="none"
-              opacity={isSelected ? 0.9 : 0.6}
-              strokeDasharray="8 4"
+              opacity={isSelected ? 0.95 : 0.75}
+              strokeDasharray="10 5"
               markerEnd={`url(#${arrowId})`}
               initial={{ pathLength: 0 }}
               animate={{ pathLength: 1 }}
@@ -171,18 +196,28 @@ export default function ConnectionLayer({
             >
               <animate
                 attributeName="stroke-dashoffset"
-                values="24;0"
-                dur="1.5s"
+                values="30;0"
+                dur="1.2s"
                 repeatCount="indefinite"
               />
             </motion.path>
 
-            {/* Flowing particle */}
-            <circle r="3" fill={lineColor} opacity="0.8" filter="url(#conn-glow)">
-              <animateMotion dur="2s" repeatCount="indefinite" path={path} />
+            {/* Flowing chakra particles */}
+            <circle r="4" fill={lineColor} opacity="0.9" filter="url(#conn-bloom)">
+              <animateMotion dur="1.8s" repeatCount="indefinite" path={path} />
+              <animate attributeName="r" values="3;5;3" dur="1.8s" repeatCount="indefinite" />
             </circle>
-            <circle r="2" fill="white" opacity="0.6">
-              <animateMotion dur="2s" repeatCount="indefinite" path={path} begin="0.5s" />
+            <circle r="2.5" fill="white" opacity="0.95">
+              <animateMotion dur="1.8s" repeatCount="indefinite" path={path} />
+            </circle>
+            <circle r="3" fill={lineColor} opacity="0.7" filter="url(#conn-glow)">
+              <animateMotion dur="2.4s" repeatCount="indefinite" path={path} begin="0.6s" />
+            </circle>
+            <circle r="1.8" fill="white" opacity="0.7">
+              <animateMotion dur="2.4s" repeatCount="indefinite" path={path} begin="0.6s" />
+            </circle>
+            <circle r="2" fill={lineColor} opacity="0.5" filter="url(#conn-glow)">
+              <animateMotion dur="3s" repeatCount="indefinite" path={path} begin="1.2s" />
             </circle>
 
             {/* Label */}

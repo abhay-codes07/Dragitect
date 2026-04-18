@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../Sidebar/Sidebar';
 import DesignCanvas from '../Canvas/DesignCanvas';
 import SenseiGuide from '../Character/SenseiGuide';
+import SenseiLessonModal from '../Character/SenseiLessonModal';
+import SenseiHintPanel from '../Character/SenseiHintPanel';
 import PropertiesPanel from './PropertiesPanel';
 import TopBar from './TopBar';
 import TemplatesModal from './TemplatesModal';
@@ -10,7 +12,7 @@ import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 import ChallengePanel from './ChallengePanel';
 import ValidationPanel from './ValidationPanel';
 import AchievementsModal from './AchievementsModal';
-import TutorialOverlay from './TutorialOverlay';
+import AppTourOverlay from './AppTourOverlay';
 import QuestMap from './QuestMap';
 import QuestGuide from './QuestGuide';
 import QuestVictory from './QuestVictory';
@@ -38,7 +40,6 @@ interface Props {
   newAchievement: string | null;
   challengeState: ChallengeState;
   simulation: SimulationState;
-  showTutorial: boolean;
   onAddNode: (type: ComponentType, position: Position) => CanvasNode;
   onUpdateNodePosition: (id: string, position: Position) => void;
   onSelectNode: (id: string | null) => void;
@@ -72,7 +73,6 @@ interface Props {
   onStartSimulation: () => void;
   onStopSimulation: () => void;
   onAdvanceSimulation: () => void;
-  onDismissTutorial: () => void;
   onAddNote: (pos: Position) => void;
   onUpdateNote: (id: string, text: string) => void;
   onRemoveNote: (id: string) => void;
@@ -91,7 +91,7 @@ interface Props {
 export default function Workspace({
   nodes, connections, selectedNode, selectedConnection, connectingFrom,
   senseiMood, transform, canUndo, canRedo, gridSnap, notes,
-  progress, newAchievement, challengeState, simulation, showTutorial,
+  progress, newAchievement, challengeState, simulation,
   onAddNode, onUpdateNodePosition, onSelectNode, onSelectConnection,
   onDeleteNode, onUpdateNodeLabel,
   onSetConnectingFrom, onAddConnection, onDeleteConnection,
@@ -102,7 +102,6 @@ export default function Workspace({
   onToggleGridSnap, onAutoLayout, onExportJSON, onImportJSON,
   onStartChallenge, onCompleteChallenge, onAbandonChallenge,
   onStartSimulation, onStopSimulation, onAdvanceSimulation,
-  onDismissTutorial,
   onAddNote, onUpdateNote, onRemoveNote, onUpdateNotePosition,
   questState, questCelebration,
   onStartQuest, onAdvanceQuestStep, onCompleteQuest, onAbandonQuest, onUseQuestHint,
@@ -114,6 +113,8 @@ export default function Workspace({
   const [showValidation, setShowValidation] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showQuestMap, setShowQuestMap] = useState(false);
+  const [showTour, setShowTour] = useState(() => !localStorage.getItem('dragitect-tour-done'));
+  const [pendingChallenge, setPendingChallenge] = useState<Challenge | null>(null);
 
   const handleConnectionStart = useCallback((id: string) => {
     onSetConnectingFrom(id);
@@ -180,6 +181,7 @@ export default function Workspace({
         progress={progress}
         onOpenProfile={() => setShowProfile(true)}
         onOpenQuests={() => setShowQuestMap(true)}
+        onOpenHelp={() => setShowTour(true)}
       />
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
@@ -281,13 +283,34 @@ export default function Workspace({
         challengeState={challengeState}
         nodes={nodes}
         connections={connections}
-        onStartChallenge={onStartChallenge}
+        onStartChallenge={(ch) => { setPendingChallenge(ch); setShowChallenges(false); }}
         onCompleteChallenge={onCompleteChallenge}
         onAbandonChallenge={onAbandonChallenge}
       />
+      <SenseiLessonModal
+        isOpen={pendingChallenge !== null}
+        challenge={pendingChallenge}
+        onClose={() => setPendingChallenge(null)}
+        onBegin={() => {
+          if (pendingChallenge) onStartChallenge(pendingChallenge);
+          setPendingChallenge(null);
+        }}
+      />
+      <SenseiHintPanel
+        challenge={challengeState.active}
+        nodes={nodes}
+        connections={connections}
+        onAbandon={onAbandonChallenge}
+      />
+      <AppTourOverlay
+        isOpen={showTour}
+        onClose={() => {
+          setShowTour(false);
+          localStorage.setItem('dragitect-tour-done', '1');
+        }}
+      />
       <ValidationPanel isOpen={showValidation} onClose={() => setShowValidation(false)} nodes={nodes} connections={connections} />
       <AchievementsModal isOpen={showProfile} onClose={() => setShowProfile(false)} progress={progress} />
-      <TutorialOverlay isOpen={showTutorial} onClose={onDismissTutorial} />
 
       {/* Achievement notification */}
       <AnimatePresence>

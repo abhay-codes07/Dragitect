@@ -47,6 +47,7 @@ export default function CanvasToolbar({
 
   return (
     <motion.div
+      data-tour="toolbar"
       initial={{ y: -40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
@@ -95,7 +96,9 @@ export default function CanvasToolbar({
         <ToolBtn icon="↙" title="Import JSON" onClick={() => fileInputRef.current?.click()} color="#00f5ff" />
         <Divider />
         <ToolBtn icon="◉" title="Design Analysis" onClick={onOpenValidation} color="#00ff88" />
-        <ToolBtn icon="⚔" title="Challenges" onClick={onOpenChallenges} color="#ff00e5" />
+        <span data-tour="challenges-btn" style={{ display: 'inline-flex' }}>
+          <ToolBtn icon="⚔" title="Challenges" onClick={onOpenChallenges} color="#ff00e5" />
+        </span>
         <ToolBtn
           icon={simulationRunning ? "⏹" : "▶"}
           title={simulationRunning ? "Stop Simulation" : "Simulate Request Flow"}

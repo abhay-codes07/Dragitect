@@ -8,6 +8,7 @@ interface Props {
   progress: UserProgress;
   onOpenProfile: () => void;
   onOpenQuests: () => void;
+  onOpenHelp: () => void;
 }
 
 const RANK_COLORS: Record<string, string> = {
@@ -19,7 +20,7 @@ const RANK_COLORS: Record<string, string> = {
   Hokage: '#ff3366',
 };
 
-export default function TopBar({ nodeCount, connectionCount, progress, onOpenProfile, onOpenQuests }: Props) {
+export default function TopBar({ nodeCount, connectionCount, progress, onOpenProfile, onOpenQuests, onOpenHelp }: Props) {
   const xpInfo = getXPForNextLevel(progress.xp);
   const xpPercent = Math.min(100, (xpInfo.current / xpInfo.needed) * 100);
   const rankColor = RANK_COLORS[progress.rank] || '#ffd700';
@@ -108,8 +109,40 @@ export default function TopBar({ nodeCount, connectionCount, progress, onOpenPro
         <StatusItem label="XP" value={progress.xp} color="#ffd700" />
       </div>
 
-      {/* Right side - Quests + Level badge */}
+      {/* Right side - Help + Quests + Level badge */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <motion.button
+          data-tour="help-btn"
+          whileHover={{ scale: 1.08, boxShadow: '0 0 18px rgba(0, 245, 255, 0.5)' }}
+          whileTap={{ scale: 0.92 }}
+          onClick={onOpenHelp}
+          title="How to use Dragitect"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '5px 12px',
+            borderRadius: 18,
+            background: 'rgba(0, 245, 255, 0.08)',
+            border: '1px solid rgba(0, 245, 255, 0.3)',
+            cursor: 'pointer',
+            fontFamily: "'Orbitron', sans-serif",
+            fontSize: 10,
+            fontWeight: 700,
+            color: '#00f5ff',
+            letterSpacing: '0.18em',
+          }}
+        >
+          <motion.span
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+            style={{ fontSize: 13, display: 'inline-block' }}
+          >
+            ?
+          </motion.span>
+          GUIDE
+        </motion.button>
+
         <motion.button
           whileHover={{ scale: 1.05, boxShadow: '0 0 24px rgba(255, 215, 0, 0.5)' }}
           whileTap={{ scale: 0.95 }}

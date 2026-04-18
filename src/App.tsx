@@ -34,7 +34,6 @@ function App() {
             newAchievement={store.newAchievement}
             challengeState={store.challengeState}
             simulation={store.simulation}
-            showTutorial={store.showTutorial}
             onAddNode={store.addNode}
             onUpdateNodePosition={store.updateNodePosition}
             onSelectNode={store.setSelectedNode}
@@ -68,7 +67,6 @@ function App() {
             onStartSimulation={store.startSimulation}
             onStopSimulation={store.stopSimulation}
             onAdvanceSimulation={store.advanceSimulation}
-            onDismissTutorial={store.dismissTutorial}
             onAddNote={store.addNote}
             onUpdateNote={store.updateNote}
             onRemoveNote={store.removeNote}

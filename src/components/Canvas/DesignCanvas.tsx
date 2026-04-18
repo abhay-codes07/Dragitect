@@ -190,6 +190,7 @@ export default function DesignCanvas({
     <motion.div
       ref={canvasRef}
       data-canvas="true"
+      data-tour="canvas"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}

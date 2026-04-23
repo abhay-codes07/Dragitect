@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { COMPONENT_META } from '../../utils/componentMeta';
 import type { ComponentType } from '../../types';
@@ -329,17 +329,30 @@ function ComponentRow({ meta, index, onDragStart }: {
   onDragStart: (type: ComponentType) => void;
 }) {
   const rgb = hexToRgb(meta.color);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  // Attach native HTML5 dragstart listener. Framer Motion strips the
+  // onDragStart prop (it's reserved for pan gestures), so a JSX handler
+  // never fires on motion.div — we bind directly to the DOM node instead.
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    const handle = (e: DragEvent) => {
+      e.dataTransfer?.setData('componentType', meta.type);
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copy';
+      onDragStart(meta.type);
+    };
+    el.addEventListener('dragstart', handle);
+    return () => el.removeEventListener('dragstart', handle);
+  }, [meta.type, onDragStart]);
+
   return (
     <motion.div
+      ref={rowRef}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.04 + index * 0.02, type: 'spring', stiffness: 220 }}
       draggable
-      onDragStart={(e) => {
-        const event = e as unknown as React.DragEvent;
-        event.dataTransfer?.setData('componentType', meta.type);
-        onDragStart(meta.type);
-      }}
       whileHover={{
         scale: 1.03,
         x: 4,
